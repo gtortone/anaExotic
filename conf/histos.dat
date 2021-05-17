@@ -1,0 +1,30 @@
+##
+##
+
+CMD:
+   using namespace rootana;
+   exotic::Dsssd det;
+   exotic::Dsssd bar;
+   exotic::Dsssd foo;
+   exotic::Dsssd pat;
+END:
+
+DIR:
+histos/event
+
+TH1D:
+   ("h1", "Title 1", 100, -20, 20)
+   det.ecal[0]
+
+TH2D:
+   ("h2", "Title 2", 200, 0, 10, 30, 0, 30)
+   det.ecal[1]
+   bar.ecal[1]
+CUT:
+   Greater(det.ecal[0], 0)
+
+TH2D:
+   ("h3", "Title 3", 200, 0, 10, 30, 0, 30)
+   bar.ecal[2]
+   foo.ecal[2]
+
