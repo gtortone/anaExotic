@@ -1,5 +1,5 @@
 #include "midas/Database.h"
-#include "utils/Definitions.h"
+#include "midas/Event.h"
 #include "utils/ErrorExotic.h"
 #include "utils/Functions.h"
 #include "utils/Valid.h"
@@ -45,26 +45,37 @@ bool check_db(const midas::Database *db, const char *cl) {
    return success;
 }
 
-//
-// Set a bank name from the ODB
-bool odb_set_bank(midas::Bank_t *bank, const midas::Database *db, const char *path, int arrayLen = 0) {
-   bool success;
-   if (!arrayLen) {
-      std::string bkName;
-      success = db->ReadValue(path, bkName);
-      if (success)
-         eutils::set_bank_name(bkName.data(), *bank);
-   } else {
-      std::vector<std::string> bkNames(arrayLen);
-      success = db->ReadArray(path, &bkNames[0], arrayLen);
-      if (success) {
-         for (int i = 0; i < arrayLen; ++i) {
-            eutils::set_bank_name(bkNames[i].data(), *(bank + i));
-         }
-      }
+uint16_t channel_map(int module, int channel, const midas::Event &event, int number = 0) {
+
+   std::stringstream bankName;
+   uint16_t *data;
+   int length;
+   uint16_t snum, sample;
+   
+   bankName << "M00" << module;
+   data = event.GetBankPointer<uint16_t>(bankName.str().c_str(), &length, true);
+
+   snum = data[4];   // number of samples per channel
+   if(number > snum) {
+      eutils::Error("Megamp channel map", __FILE__, __LINE__) << "Invalid sample number" << number;
+      return 0;
    }
-   return success;
+
+   sample = data[((snum + 1) * (channel+1)) + number];
+   std::cout << "module: " << module << " channel: " << channel << " sample: " << sample << std::endl;
+   return sample;
+   
 }
+
+template <class T>
+void channel_map(T* output, int numch, const int* channels, const int* modules, const midas::Event &event) {
+   
+   for (int i=0; i<numch; ++i) {
+		output[i] = channel_map(modules[i],channels[i], event);
+	}
+}
+
+
 
 } // namespace
 
@@ -118,6 +129,15 @@ void exotic::Dsssd::reset() {
    eutils::reset_array(MAX_CHANNELS, ecal);
 }
 
+bool exotic::Dsssd::set_variables(const char* dbfile)
+{
+   /*!
+    * \param [in] dbfile Name of the XML database file
+    * \note Passing \c "online" looks at the online ODB.
+    */
+   return do_setv(&this->variables, dbfile);
+}
+
 // void exotic::Dsssd::read_data(const vme::V785 adcs[], const vme::V1190& tdc)
 // {
 // 	/*!
@@ -128,41 +148,21 @@ void exotic::Dsssd::reset() {
 // 	 * \param [in] adcs Array of vme::V785 adc modules from which data can be taken
 // 	 * \param [in] tdc vme::V1190 tdc module from which data can be read
 // 	 */
-// 	eutils::channel_map(ecal, MAX_CHANNELS, variables.adc.channel, variables.adc.module, adcs);
-// 	eutils::channel_map(tfront, variables.tdc_front.channel, tdc);
-// 	eutils::channel_map(tback,  variables.tdc_back.channel,  tdc);
 // }
 
-void exotic::Dsssd::read_data(void) {
-   ecal[0] = 10;
-   ecal[1] = 20;
-   eutils::Info("exotic::read_data", __FILE__, __LINE__);
+void exotic::Dsssd::read_data(const midas::Event &event) {
+   channel_map(ecal, MAX_CHANNELS, variables.adc.channel, variables.adc.module, event);
 }
 
 void exotic::Dsssd::calculate() {
    /*!
 	 * Does a linear transformation on each element in \c this->ecal[] using the slopes and offsets
-	 * from variables.adc_slope and variables.adc_offset, respectively. Also calibrates the TDC
-	 * signal; calculates efront, hit_front, eback, and hit_back.
+	 * from variables.adc_slope and variables.adc_offset, respectively.
 	 *
-	 * Delegates the work to dutils::linear_calibrate
+	 * Delegates the work to eutils::linear_calibrate
 	 * \note Do we want to add a zero suppression threshold here?
 	 */
    eutils::linear_calibrate(ecal, MAX_CHANNELS, variables.adc);
-   // eutils::linear_calibrate(tfront, variables.tdc_front);
-   // eutils::linear_calibrate(tback,  variables.tdc_back);
-
-   if (eutils::is_valid_any(ecal, 16)) {
-      const double *const pmax_front = std::max_element(ecal, ecal + 16);
-      //efront = *pmax_front;
-      //hit_front = pmax_front - ecal;
-   }
-
-   if (eutils::is_valid_any(ecal + 16, 16)) {
-      const double *const pmax_back = std::max_element(ecal + 16, ecal + 32);
-      //eback  = *pmax_back;
-      //hit_back = pmax_back - ecal;
-   }
 }
 
 // ================ class dragon::Dsssd::Variables ================ //
@@ -175,21 +175,11 @@ exotic::Dsssd::Variables::Variables() {
 void exotic::Dsssd::Variables::reset() {
    /// ::
    // std::fill(adc.module, adc.module + MAX_CHANNELS, DSSSD_MODULE);
-   // eutils::index_fill(adc.channel, adc.channel + MAX_CHANNELS, DSSSD_ADC0);
+   eutils::index_fill(adc.channel, adc.channel + MAX_CHANNELS);
 
    std::fill(adc.pedestal, adc.pedestal + MAX_CHANNELS, 0);
    std::fill(adc.slope, adc.slope + MAX_CHANNELS, 1.);
    std::fill(adc.offset, adc.offset + MAX_CHANNELS, 0.);
-
-   // tdc_front.module  = 0; // unused
-   // tdc_front.channel = DSSSD_TDC0;
-   // tdc_front.slope   = 1.;
-   // tdc_front.offset  = 0.;
-
-   // tdc_back.module  = 0; // unused
-   // tdc_back.channel = DSSSD_TDC0 + 1;
-   // tdc_back.slope   = 1.;
-   // tdc_back.offset  = 0.;
 }
 
 bool exotic::Dsssd::Variables::set(const char *dbfile) {
@@ -213,14 +203,6 @@ bool exotic::Dsssd::Variables::set(const midas::Database *db) {
       success = db->ReadArray("/exotic/dsssd/variables/adc/slope", adc.slope, MAX_CHANNELS);
    if (success)
       success = db->ReadArray("/exotic/dsssd/variables/adc/offset", adc.offset, MAX_CHANNELS);
-
-   // if(success) success = db->ReadValue("/exotic/dsssd/variables/tdc_front/channel", tdc_front.channel);
-   // if(success) success = db->ReadValue("/exotic/dsssd/variables/tdc_front/slope",   tdc_front.slope);
-   // if(success) success = db->ReadValue("/exotic/dsssd/variables/tdc_front/offset",  tdc_front.offset);
-
-   // if(success) success = db->ReadValue("/exotic/dsssd/variables/tdc_back/channel", tdc_back.channel);
-   // if(success) success = db->ReadValue("/exotic/dsssd/variables/tdc_back/slope",   tdc_back.slope);
-   // if(success) success = db->ReadValue("/exotic/dsssd/variables/tdc_back/offset",  tdc_back.offset);
 
    return success;
 }

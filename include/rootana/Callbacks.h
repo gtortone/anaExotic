@@ -1,6 +1,5 @@
 #ifndef ROOTANA_CALLBACKS_H
 #define ROOTANA_CALLBACKS_H
-#include "utils/Definitions.h"
 #include "utils/ErrorExotic.h"
 #include "midas/Event.h"
 #include "Application.h"

@@ -3,7 +3,6 @@
 
 // EXOTIC Globals //
 #include "utils/Exotic.h"
-#include "TStamp.h"
 
 #ifndef G__DICTIONARY
 /// Provide 'extern' linkage except in CINT dictionary
@@ -15,9 +14,9 @@
 namespace rootana {
 
 /// Global timestamp diagnostics class
-EXTERN tstamp::Diagnostics gDiagnostics;
+//EXTERN tstamp::Diagnostics gDiagnostics;
 
-// EXTERN exotic::Dsssd det;
+EXTERN exotic::Dsssd det;
 
 // /// Gloal gamma event class
 // EXTERN dragon::Head gHead;

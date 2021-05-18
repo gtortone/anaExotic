@@ -18,7 +18,6 @@
 #include "rootana/Histos.h"
 #include "rootana/Timer.h"
 #include "utils/Functions.h"
-
 #include "rootana/Globals.h"
 
 namespace {
@@ -28,7 +27,8 @@ const uint32_t TS_DIAGNOSTICS_EVENT = 6;
 template <class T, class E>
 inline void unpack_event(T &data, const E &buf) {
    data.reset();
-   data.unpack(buf);
+   data.read_data(buf);
+   //data.unpack(buf);
    data.calculate();
 }
 
@@ -77,8 +77,6 @@ rootana::App::App(const char *appClassName, Int_t *argc, char **argv) : TApplica
  *  Also: process command line arguments, starts histogram server if appropriate.
  */
    process_argv(*argc, argv);
-   if (!fQueue.get())
-      fQueue.reset(tstamp::NewOwnedQueue(4e6, this));
    if (fMode == ONLINE) {
       gROOT->cd();
       fOnlineHists.reset(new rootana::OnlineDirectory());
@@ -115,8 +113,8 @@ void rootana::App::process_argv(int argc, char **argv) {
          fHost = iarg->substr(2);
       else if (iarg->compare(0, 2, "-E") == 0)
          fExpt = iarg->substr(2);
-      else if (iarg->compare(0, 6, "-Qtime") == 0)
-         fQueue.reset(tstamp::NewOwnedQueue(atof(iarg->substr(6).c_str()), this));
+      //else if (iarg->compare(0, 6, "-Qtime") == 0)
+      //   fQueue.reset(tstamp::NewOwnedQueue(atof(iarg->substr(6).c_str()), this));
       else if (iarg->compare(0, 6, "-Ctime") == 0)
          fCoincWindow = atof(iarg->substr(6).c_str());
       else if (iarg->compare("-histos") == 0)
@@ -134,22 +132,11 @@ void rootana::App::process_argv(int argc, char **argv) {
 
 void rootana::App::handle_event(midas::Event &event) {
    /*!
-	 * Handles various types of events in the following ways:
+	 * Handles events in the following ways:
 	 */
 
    exotic::utils::Info("", __FILE__, __LINE__) << "inside rootana::App::handle_event";
    Process(event);
-
-   // const uint16_t EID = event.GetEventId();
-   // if (EID == EXOTIC_HEAD_EVENT || EID == EXOTIC_TAIL_EVENT) {
-   //    /// - Head and tail events: insert into queue; call to Process() is delayed
-   //    ///   until it's at the front of the queue.
-   //    /// !!! Pop from queue for COINCIDENCE calculation !!!
-   //    //fQueue->Push(event, &gDiagnostics);
-   // } else {
-   //    /// - All others: call Process() directly.
-   //    Process(event);
-   // }
 }
 
 template <class IT>
@@ -162,137 +149,10 @@ IT FindSerial(IT begin_, IT end_, uint32_t value) {
 
 void rootana::App::Process(const midas::Event &event) {
    const uint16_t EID = event.GetEventId();
-   switch (EID) {
 
-   case EXOTIC_HEAD_EVENT: /// - DRAGON_HEAD_EVENT: Calculate head params & fill head histos
-   {
-#if 0
-			std::list<dragon::Head>::iterator it =
-				FindSerial(fHeadProcessed.begin(), fHeadProcessed.end(), event.GetSerialNumber());
-
-			if (it != fHeadProcessed.end()) {
-				rootana::gHead = *it;
-				fHeadProcessed.erase(it);
-			}
-			else {
-				unpack_event(rootana::gHead, event);
-			}
-#else
-      //unpack_event(rootana::gHead, event);
-      exotic::utils::Info("", __FILE__, __LINE__) << "inside rootana::App::Process : snum = " << event.GetSerialNumber();
-      fill_hists(EID);
-#endif
-      break;
-   }
-
-   case EXOTIC_TAIL_EVENT: /// - DRAGON_TAIL_EVENT: Calculate tail params & fill tail histos
-   {
-      //unpack_event(rootana::gTail, event);
-      fill_hists(EID);
-      break;
-   }
-
-   case EXOTIC_HEAD_SCALER: /// - DRAGON_HEAD_SCALER:
-      //rootana::gHeadScaler.unpack(event);
-      fill_hists(EID);
-      break;
-
-   case EXOTIC_TAIL_SCALER: /// - DRAGON_TAIL_SCALER:
-      //rootana::gTailScaler.unpack(event);
-      fill_hists(EID);
-      break;
-
-   case EXOTIC_EPICS_EVENT: /// - DRAGON_EPICS_EVENT
-      //rootana::gEpics.unpack(event);
-      fill_hists(EID);
-      break;
-
-   default: /// - Silently ignore other event types
-      exotic::utils::Warning("Process") << "Unknown event id: " << EID << ", skipping";
-      break;
-   }
+   unpack_event(rootana::det, event);
+   fill_hists(EID);
 }
-
-void rootana::App::Process(const midas::Event &event1, const midas::Event &event2) {
-   //midas::CoincEvent coincEvent(event1, event2);
-
-   // if (coincEvent.fHeavyIon == 0 ||	coincEvent.fGamma == 0) {
-   // 	exotic::utils::Error("rootana::TSQueue::HandleCoinc")
-   // 		<< "Invalid coincidence event, skipping...\n";
-   // 	return;
-   // }
-
-   //unpack_event(rootana::gCoinc, coincEvent);
-   fill_hists(EXOTIC_COINC_EVENT);
-
-   //fHeadProcessed.push_back(rootana::gCoinc.head);
-   //fTailProcessed.push_back(rootana::gCoinc.tail);
-
-   //if(0) event1.PrintCoinc(event2);
-}
-
-void rootana::App::Process(tstamp::Diagnostics *d) {
-   fill_hists(TS_DIAGNOSTICS_EVENT);
-}
-
-// int rootana::App::midas_file(const char* fname)
-// {
-// 	/*!
-// 	 * Loops through a midas file and processes the events, up
-// 	 * to fCutoff.
-// 	 * \returns 0 if successful, -1 if failure
-// 	 */
-// 	printf ("Processing offline file: %s", fname);
-// 	if (fCutoff) printf (" (%i events)\n", fCutoff);
-// 	else printf("\n");
-
-//   TMidasFile f;
-//   bool tryOpen = f.Open(fname);
-//   if (!tryOpen) {
-// 		printf("Cannot open input file \"%s\"\n",fname);
-// 		return -1;
-// 	}
-
-//   int i=0;
-//   while (1) {
-
-// 		TMidasEvent event;
-// 		if (!f.Read(&event)) break;
-
-// 		int eventId = event.GetEventId();
-
-// 		if ((eventId & 0xFFFF) == 0x8000) { // begin run
-
-// 			printf("---- BEGIN RUN ---- \n");
-
-// 			fOdb.reset(new midas::Database(fname));
-
-// 			rootana_run_start(0, event.GetSerialNumber(), 0);
-// 		}
-
-// 		else if ((eventId & 0xFFFF) == 0x8001) { // end run
-// 			printf("---- END RUN ---- \n");
-// 		}
-
-// 		else {
-// 			event.SetBankList();
-// 			rootana_handle_event(event.GetEventHeader(), event.GetData(), event.GetDataSize());
-// 		}
-
-// 		if((i%500)==0)
-// 			printf("Processing event %d\n",i);
-
-// 		i++;
-
-// 		if ( (fCutoff!=0) && (i >= fCutoff) ) {
-// 			printf("Reached event %d, exiting loop.\n",i);
-// 			break;
-// 		}
-// 	}
-
-//   f.Close();
-//   return 0;
-// }
 
 int rootana::App::midas_online(const char *host, const char *experiment) {
    /*!
@@ -419,6 +279,7 @@ void rootana::App::run_start(int runnum) {
    // rootana::gHeadScaler.reset();
    // rootana::gTailScaler.reset();
    // rootana::gDiagnostics.reset();
+   rootana::det.reset();
 
    /// Read variables from the ODB
    // rootana::gHead.set_variables("online");
@@ -426,6 +287,7 @@ void rootana::App::run_start(int runnum) {
    // rootana::gCoinc.set_variables("online");
    // rootana::gHeadScaler.set_variables("online", "head");
    // rootana::gTailScaler.set_variables("online", "tail");
+   rootana::det.set_variables("online");
 
    bool opened = fOutputFile->Open(runnum, fHistos.c_str());
    if (!opened)
@@ -440,14 +302,13 @@ void rootana::App::run_stop(int runnum) {
 	 *  save histograms, closes output root file.
 	 */
    fRunNumber = runnum;
-   // fQueue->Flush(30, &gDiagnostics);
    fOutputFile->Close();
    exotic::utils::Info("rootana") << "End of run " << runnum;
 }
 
 void rootana::App::fill_hists(uint16_t eid) {
-   fOutputFile->CallForAll(&rootana::HistBase::fill, eid);
-   fOnlineHists->CallForAll(&rootana::HistBase::fill, eid);
+   fOutputFile->CallForAll(&rootana::HistBase::fill);
+   fOnlineHists->CallForAll(&rootana::HistBase::fill);
 }
 
 void rootana::App::help() {
@@ -460,7 +321,6 @@ void rootana::App::help() {
    printf("\t-histos0: Specify online *only* histogram definition file\n");
    printf("\t-Hhostname: connect to MIDAS experiment on given host\n");
    printf("\t-Eexptname: connect to this MIDAS experiment\n");
-   printf("\t-Qtime: Set timestamp matching queue time in microseconds (default: 10e6)\n");
    printf("\t-Ctime: Set coincidence matching window in microseconds (default: 10.0)\n");
    printf("\t-P: Start the TNetDirectory server on specified tcp port (for use with roody -Plocalhost:9091)\n");
    printf("\t-r: Start THttpServer on specified tcp port\n");

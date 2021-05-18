@@ -1,6 +1,4 @@
 #include "midas/Event.h"
-#include "utils/Bits.h"
-#include "utils/Definitions.h"
 #include "utils/Functions.h"
 #include <algorithm>
 #include <cassert>

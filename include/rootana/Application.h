@@ -48,7 +48,7 @@ class App : public TApplication {
    std::unique_ptr<rootana::OfflineDirectory> fOutputFile; ///< Online/offline histograms
    std::unique_ptr<rootana::OnlineDirectory> fOnlineHists; ///< Online-only histograms
    std::unique_ptr<midas::Database> fOdb;                  ///< Online/offline database
-   std::unique_ptr<tstamp::Queue> fQueue;                  ///< Timestamping queue
+   //std::unique_ptr<tstamp::Queue> fQueue;                  ///< Timestamping queue
    std::unique_ptr<MidasOnline> fMidasOnline;              ///< "Online midas" instance
 
    //std::list<dragon::Head> fHeadProcessed;               ///< Head events already unpacked

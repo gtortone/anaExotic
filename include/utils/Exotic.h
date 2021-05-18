@@ -3,6 +3,7 @@
 
 #include "utils/VariableStructs.h"
 #include "midas/Database.h"
+#include "midas/Event.h"
 #include <stdint.h>
 
 namespace exotic {
@@ -44,13 +45,15 @@ class RunParameters {
 class Dsssd {
 
  public: // Constants
-   static const int MAX_CHANNELS = 32;
+   static const int MAX_CHANNELS = 8;
 
  public: // Methods
    Dsssd();
    void reset();
+   bool set_variables(const char* dbfile);
    //void read_data(const vme::V785 adcs[], const vme::V1190 &tdc);
    void read_data(void);
+   void read_data(const midas::Event &event);
    void calculate();
 
  public:

@@ -4,7 +4,6 @@
 #include <TROOT.h>
 #include <TDirectory.h>
 #include "midas.h"
-#include "utils/Definitions.h"
 #include "utils/ErrorExotic.h"
 #include "rootana/Histos.h"
 #include "rootana/Directory.h"
@@ -25,7 +24,7 @@ inline bool contains(const std::string& s, const char* arg)
 }
 
 inline Int_t get_type(const std::string& spar)
-{
+{/*
 	if(0){}
 	else if (contains(spar, "rootana::gHeadScaler"))  return EXOTIC_HEAD_SCALER;
 	else if (contains(spar, "rootana::gTailScaler"))  return EXOTIC_TAIL_SCALER;
@@ -33,7 +32,7 @@ inline Int_t get_type(const std::string& spar)
 	else if (contains(spar, "rootana::gTail"))        return EXOTIC_TAIL_EVENT;
 	else if (contains(spar, "rootana::gCoinc"))       return EXOTIC_COINC_EVENT;
 	else if (contains(spar, "rootana::gDiagnostics")) return 6; // timestamp diagnostics
-	else return -1;
+	else */ return -1;
 }
 
 inline void throw_bad_line(const std::string& line, int linenum, const char* fname, std::stringstream* pcmd = 0)
@@ -202,15 +201,16 @@ void rootana::HistParser::handle_hist(const char* type)
 		}
 	}
 
-	Int_t type_code = get_type(spar[0]);
-	for(int i=1; i< npar; ++i) {
-		Int_t type_i = get_type(spar[i]);
-		if(type_i != type_code) {
-			exotic::utils::Error("HistParser") << "Mixed event types.";
-			throw_bad_line (spar[i], lpar[i], fFilename);
-		}
-	}
-	add_hist(h, type_code);
+	// Int_t type_code = get_type(spar[0]);
+	// for(int i=1; i< npar; ++i) {
+	// 	Int_t type_i = get_type(spar[i]);
+	// 	if(type_i != type_code) {
+	// 		exotic::utils::Error("HistParser") << "Mixed event types.";
+	// 		throw_bad_line (spar[i], lpar[i], fFilename);
+	// 	}
+	// }
+	//add_hist(h, type_code);
+	add_hist(h, -1);
 }
 
 void rootana::HistParser::handle_scaler()

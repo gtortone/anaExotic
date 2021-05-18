@@ -3,7 +3,6 @@
 #include "utils/IntTypes.h"
 #include <numeric>
 #include <functional>
-#include "utils/Bits.h"
 #include "utils/Valid.h"
 
 #ifndef __MAKECINT__
