@@ -37,11 +37,11 @@ inline void set_bank_name(const midas::Bank_t from, midas::Bank_t to) {
 #endif
 
 inline void fillNameTable(void) {
-   std::stringstream s;
    for (uint i = 0; i < rootana::DsssdList.size(); i++) {
+      std::stringstream s;
 		s << "DsssdList[" << i << "]";
       rootana::DetTable[rootana::DsssdList[i]->getName()] = s.str();
-      s.clear();
+      std::cout << "fillNameTable: " << s.str() << std::endl;
    }
 }
 

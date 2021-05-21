@@ -47,6 +47,7 @@ void channel_map(T *output, int numch, const int *channels, const int *modules, 
 // ================ class exotic::Dsssd ========================= //
 
 exotic::Dsssd::Dsssd(std::string alias) : Detector(alias), variables() {
+   validLinks = 0;
    reset();
 }
 
@@ -55,25 +56,8 @@ void exotic::Dsssd::reset() {
    eutils::reset_array(MAX_CHANNELS, ecal);
 }
 
-bool exotic::Dsssd::set_variables(const char *dbfile) {
-   /*!
-    * \param [in] dbfile Name of the XML database file
-    * \note Passing \c "online" looks at the online ODB.
-    */
-   //return do_setv(&this->variables, dbfile);
-   return 1;
-}
-
-// void exotic::Dsssd::read_data(const vme::V785 adcs[], const vme::V1190& tdc)
-// {
-// 	/*!
-// 	 * Copies adc data into \c this->ecal[] with channel and module mapping taken
-// 	 * from variables.adc.channel and variables.adc.modules
-// 	 */
-// }
-
 void exotic::Dsssd::read_data(const midas::Event &event) {
-   channel_map(ecal, MAX_CHANNELS, variables.adc.channel, variables.adc.module, event);
+   channel_map(ecal, validLinks, variables.adc.channel, variables.adc.module, event);
 }
 
 void exotic::Dsssd::calculate() {
@@ -84,7 +68,7 @@ void exotic::Dsssd::calculate() {
 	 * Delegates the work to eutils::linear_calibrate
 	 * \note Do we want to add a zero suppression threshold here?
 	 */
-   eutils::linear_calibrate(ecal, MAX_CHANNELS, variables.adc);
+   eutils::linear_calibrate(ecal, validLinks, variables.adc);
 }
 
 // ================ class dragon::Dsssd::Variables ================ //

@@ -22,7 +22,6 @@ class Detector {
    virtual ~Detector(){};
 
    virtual void reset()=0;
-   virtual bool set_variables(const char *dbfile)=0;
    virtual void read_data(const midas::Event &event)=0;
    virtual void calculate()=0;
 
@@ -36,18 +35,19 @@ class Detector {
 class Dsssd : public Detector {
 
  public: // Constants
-   static const int MAX_CHANNELS = 8;
+   static const int MAX_CHANNELS = 32;
 
  public: // Methods
    Dsssd(std::string alias);
    void reset();
-   bool set_variables(const char *dbfile);
    void read_data(const midas::Event &event);
    void calculate();
 
  public:
    // Calibrated energy signals
    double ecal[MAX_CHANNELS];
+   // Number of connected detector links
+   uint validLinks;
 
  public: // Subclasses
    //
@@ -56,8 +56,6 @@ class Dsssd : public Detector {
    class Variables {
     public: // Methods
       Variables();
-      bool set(const char *dbfile);
-      bool set(const midas::Database *db);
       void reset();
 
     public: // Data

@@ -19,7 +19,7 @@ TH1D:
 TH2D:
    ("h2", "Title 2", 512, 0, 16383, 512, 0, 16383)
    front->ecal[0]
-   front->ecal[0]
+   back->ecal[0]
 #CUT:
 #   Greater(det.ecal[0], 1500)
 

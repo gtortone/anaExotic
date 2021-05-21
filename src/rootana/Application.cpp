@@ -135,8 +135,6 @@ void rootana::App::handle_event(midas::Event &event) {
    /*!
 	 * Handles events in the following ways:
 	 */
-
-   std::cout << "inside rootana::App::handle_event" << std::endl;
    Process(event);
 }
 
@@ -341,11 +339,7 @@ void rootana::App::process_json(void) {
          exotic::Dsssd *det = DsssdList.back();
 
          for (uint k = 0; k < j[i]["link"].size(); k++) {
-            if (j[i]["link"][k]["id"].is_null()) {
-               exotic::utils::Error("rootana") << "Detector name " << name << " missing id";
-               Terminate(1);
-            }
-            uint id = j[i]["link"][k]["id"];
+            uint id = k;
 
             if (j[i]["link"][k]["board"].is_null()) {
                exotic::utils::Error("rootana") << "Detector name " << name << " missing board number";
@@ -379,6 +373,8 @@ void rootana::App::process_json(void) {
                det->variables.adc.pedestal[id] = 0;
             else
                det->variables.adc.pedestal[id] = j[i]["link"][k]["pedestal"];
+
+            det->validLinks++;
          }
       } else {
          exotic::utils::Error("rootana") << "Detector type " << type << " not correct";
@@ -389,7 +385,7 @@ void rootana::App::process_json(void) {
       /// add detectors here
       ///
    }
-   
+
    exotic::utils::fillNameTable();
 }
 
