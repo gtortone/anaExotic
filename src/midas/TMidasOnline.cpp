@@ -5,27 +5,20 @@
 
   Contents:     C++ MIDAS analyzer
 
-  $Id: TMidasOnline.cxx 139 2013-09-05 21:08:57Z lindner $
+  $Id$
 
 \********************************************************************/
 
-#include "midas/TMidasOnline.h"
+#include "TMidasOnline.h"
 
 #include <string>
 #include <assert.h>
-#include "midas.h"
+
+//#include "midas.h"
 #include "msystem.h"
 //#include "hardware.h"
 //#include "ybos.h"
 
-#ifndef ASYNC
-#ifdef  BM_NO_WAIT
-#define ASYNC BM_NO_WAIT
-#else
-#define ASYNC 1
-#endif
-#endif
- 
 
 TMidasOnline::TMidasOnline() // ctor
 {
@@ -41,6 +34,7 @@ TMidasOnline::TMidasOnline() // ctor
 TMidasOnline::~TMidasOnline() // dtor
 {
   disconnect();
+  assert(!"TMidasOnline::~TMidasOnline(): destruction of the TMidasOnline singleton is not permitted!");
 }
 
 TMidasOnline* TMidasOnline::instance()
@@ -134,31 +128,34 @@ bool TMidasOnline::checkTransitions()
     return false;
   
   //printf("cm_query_transition: status %d, tr %d, run %d, time %d\n",status,transition,run_number,trans_time);
+
+  for (unsigned i=0; i<fHandlers.size(); i++)
+    fHandlers[i]->Transition(transition, run_number, trans_time);
   
   if (transition == TR_START)
     {
       if (fStartHandler)
-	(*fStartHandler)(transition,run_number,trans_time);
+        (*fStartHandler)(transition,run_number,trans_time);
       return true;
     }
   else if (transition == TR_STOP)
     {
       if (fStopHandler)
-	(*fStopHandler)(transition,run_number,trans_time);
+        (*fStopHandler)(transition,run_number,trans_time);
       return true;
       
     }
   else if (transition == TR_PAUSE)
     {
       if (fPauseHandler)
-	(*fPauseHandler)(transition,run_number,trans_time);
+        (*fPauseHandler)(transition,run_number,trans_time);
       return true;
       
     }
   else if (transition == TR_RESUME)
     {
       if (fResumeHandler)
-	(*fResumeHandler)(transition,run_number,trans_time);
+        (*fResumeHandler)(transition,run_number,trans_time);
       return true;
     }
   
@@ -183,6 +180,38 @@ bool TMidasOnline::poll(int mdelay)
   return true;
 }
 
+bool TMidasOnline::sleep(int mdelay)
+{
+  //printf("poll!\n");
+  
+  if (checkTransitions())
+    return true;
+  
+  int status = ss_suspend(mdelay, MSG_BM);
+  if (status == SS_SUCCESS)
+    return true;
+  if (status == SS_TIMEOUT)
+    return true;
+#if 0
+  if (status == SS_SERVER_RECV) {
+    //printf("ss_suspend status %d\n", status);
+    // FIXME: maybe sleep here?
+    return true;
+  }
+#endif
+  fprintf(stderr, "TMidasOnline::sleep(): Unexpected ss_suspend() status %d\n", status);
+#if 0
+  if (status == RPC_SHUTDOWN || status == SS_ABORT)
+    {
+      fprintf(stderr, "TMidasOnline::poll: cm_yield(%d) status %d, shutting down.\n",mdelay,status);
+      disconnect();
+      return false;
+    }
+#endif
+  
+  return true;
+}
+
 void TMidasOnline::setEventHandler(EventHandler handler)
 {
   fEventHandler  = handler;
@@ -202,9 +231,14 @@ static void eventCallback(HNDLE buffer_handle, HNDLE request_id, EVENT_HEADER* p
 	 pheader->data_size,
 	 pevent);
 #endif
+
+  TMidasOnline* midas = TMidasOnline::instance();
   
-  if (TMidasOnline::instance()->fEventHandler)
-    TMidasOnline::instance()->fEventHandler(pheader,pevent,pheader->data_size);
+  for (unsigned i=0; i<midas->fHandlers.size(); i++)
+    midas->fHandlers[i]->Event(pheader, sizeof(EVENT_HEADER) + pheader->data_size);
+
+  if (midas->fEventHandler)
+    midas->fEventHandler(pheader,pevent,pheader->data_size);
 }
 
 int TMidasOnline::receiveEvent(int requestId, void* pevent, int size, bool async)
@@ -226,8 +260,14 @@ int TMidasOnline::receiveEvent(int requestId, void* pevent, int size, bool async
     }
 
   int flag = 0;
-  if (async)
+  if (async){
+#ifdef BM_NO_WAIT
+    flag = BM_NO_WAIT;
+#else
     flag = ASYNC;
+#endif
+  }
+
 
   int status = bm_receive_event(r->fBufferHandle, pevent, &size, flag);
 
@@ -272,9 +312,11 @@ int TMidasOnline::eventRequest(const char* bufferName, int eventId, int triggerM
       return -1;
     }
   
-  /* set the default buffer cache size */
-  status = bm_set_cache_size(r->fBufferHandle, 100000, 0);
-  assert(status == BM_SUCCESS);
+  /* set the default buffer cache size (but not GET_RECENT sampling type*/
+	if(samplingType != GET_RECENT){
+		status = bm_set_cache_size(r->fBufferHandle, 100000, 0);
+		assert(status == BM_SUCCESS);
+	}
 
   if (poll)
     status = bm_request_event(r->fBufferHandle, r->fEventId, r->fTriggerMask, r->fSamplingType, &r->fRequestId, NULL);
@@ -324,137 +366,14 @@ void TMidasOnline::deleteEventRequest(int requestId)
       }
 }
 
-
-
-
-int TMidasOnline::odbReadInt(const char*name,int index,int defaultValue)
+TMHandlerInterface::~TMHandlerInterface()
 {
-  int value = defaultValue;
-  if (odbReadAny(name,index,TID_INT,&value) == 0)
-    return value;
-  else
-    return defaultValue;
-};
-
-uint32_t TMidasOnline::odbReadUint32(const char*name,int index,uint32_t defaultValue)
-{
-  uint32_t value = defaultValue;
-  if (odbReadAny(name,index,TID_DWORD,&value) == 0)
-    return value;
-  else
-    return defaultValue;
-};
-
-bool     TMidasOnline::odbReadBool(const char*name,int index,bool defaultValue)
-{
-  uint32_t value = defaultValue;
-  if (odbReadAny(name,index,TID_BOOL,&value) == 0)
-    return value;
-  else
-    return defaultValue;
-};
-
-float TMidasOnline::odbReadFloat(const char*name,int index,float defaultValue)
-{
-  float value = defaultValue;
-  if (odbReadAny(name,index,TID_FLOAT,&value) == 0)
-    return value;
-  else
-    return defaultValue;
-};
-
-double TMidasOnline::odbReadDouble(const char*name,int index,double defaultValue)
-{
-  double value = defaultValue;
-  if (odbReadAny(name,index,TID_DOUBLE,&value) == 0)
-    return value;
-  else
-    return defaultValue;
-};
-
-const char* TMidasOnline::odbReadString(const char *name, int index, const char *defaultValue)
-{
-  const int bufsize = 1024;
-  static char buf[bufsize];
-  if (odbReadAny(name, index, TID_STRING, buf, bufsize) == 0)
-    return buf;
-  else
-    return defaultValue;
-};
-
-int TMidasOnline::odbReadArraySize(const char*name)
-{
-  int status;
-  HNDLE hdir = 0;
-  HNDLE hkey;
-  KEY key;
-
-  status = db_find_key (fDB, hdir, (char*)name, &hkey);
-  if (status != SUCCESS)
-    return 0;
-
-  status = db_get_key(fDB, hkey, &key);
-  if (status != SUCCESS)
-    return 0;
-
-  return key.num_values;
 }
 
-int TMidasOnline::odbReadAny(const char*name,int index,int tid,void* buf, int bufsize)
+void TMidasOnline::RegisterHandler(TMHandlerInterface* h)
 {
-  int status;
-  int size = bufsize; 
-  HNDLE hdir = 0;
-  HNDLE hkey;
-
-  if (size == 0)
-    size = rpc_tid_size(tid);
-
-  status = db_find_key (fDB, hdir, (char*)name, &hkey);
-  if (status == SUCCESS)
-    {
-      status = db_get_data_index(fDB, hkey, buf, &size, index, tid);
-      if (status != SUCCESS)
-        {
-          cm_msg(MERROR, "TMidasOnline", "Cannot read \'%s\'[%d] of type %d from odb, db_get_data_index() status %d", name, index, tid, status);
-          return -1;
-        }
-
-      return 0;
-    }
-  else if (status == DB_NO_KEY)
-    {
-      cm_msg(MINFO, "TMidasOnline", "Creating \'%s\'[%d] of type %d", name, index, tid);
-
-      status = db_create_key(fDB, hdir, (char*)name, tid);
-      if (status != SUCCESS)
-        {
-          cm_msg (MERROR, "TMidasOnline", "Cannot create \'%s\' of type %d, db_create_key() status %d", name, tid, status);
-          return -1;
-        }
-
-      status = db_find_key (fDB, hdir, (char*)name, &hkey);
-      if (status != SUCCESS)
-        {
-          cm_msg(MERROR, "TMidasOnline", "Cannot create \'%s\', db_find_key() status %d", name, status);
-          return -1;
-        }
-
-      status = db_set_data_index(fDB, hkey, buf, size, index, tid);
-      if (status != SUCCESS)
-        {
-          cm_msg(MERROR, "TMidasOnline", "Cannot write \'%s\'[%d] of type %d to odb, db_set_data_index() status %d", name, index, tid, status);
-          return -1;
-        }
-
-      return 0;
-    }
-  else
-    {
-      cm_msg(MERROR, "TMidasOnline", "Cannot read \'%s\'[%d] from odb, db_find_key() status %d", name, index, status);
-      return -1;
-    }
-};
+  fHandlers.push_back(h);
+}
 
 TMidasOnline* TMidasOnline::gfMidas = NULL;
 

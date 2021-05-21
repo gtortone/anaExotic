@@ -1,58 +1,47 @@
 #ifndef HAVE_EXOTIC_H_
 #define HAVE_EXOTIC_H_
 
-#include "utils/VariableStructs.h"
 #include "midas/Database.h"
 #include "midas/Event.h"
+#include "utils/VariableStructs.h"
 #include <stdint.h>
 
 namespace exotic {
 
 // ======= Class definitions ======== //
-///
-/// Global run parameters
-///
-class RunParameters {
- public:                               // Constants
-   static const int MAX_FRONTENDS = 2; //!
- public:                               // Methods
-   /// Constructor, calls reset()
-   RunParameters();
-   /// Sets all data to defaults
-   void reset();
-   /// Reads data from the ODB or a midas file
-   bool read_data(const midas::Database *db);
+//
+// Detector
+//
+class Detector {
 
- public: // Data
-   /// Run start time from the tsc (in seconds)
-   /*! [0]: head, [1]: tail */
-   double run_start[MAX_FRONTENDS];
-   /// Run stop time from the tsc (in seconds)
-   /*! [0]: head, [1]: tail */
-   double run_stop[MAX_FRONTENDS];
-   /// Trigger start time from the tsc (in seconds)
-   /*! [0]: head, [1]: tail */
-   double trigger_start[MAX_FRONTENDS];
-   /// Trigger stop time from the tsc (in seconds)
-   /*! [0]: head, [1]: tail */
-   double trigger_stop[MAX_FRONTENDS];
+ private:
+   std::string name;
+
+ public:
+   Detector(std::string s) { name = s; };
+   virtual ~Detector(){};
+
+   virtual void reset()=0;
+   virtual bool set_variables(const char *dbfile)=0;
+   virtual void read_data(const midas::Event &event)=0;
+   virtual void calculate()=0;
+
+   std::string getName(void) { return name; };
 };
 
 //
 // Double-Sided Silicon Strip Detector
 //
 
-class Dsssd {
+class Dsssd : public Detector {
 
  public: // Constants
    static const int MAX_CHANNELS = 8;
 
  public: // Methods
-   Dsssd();
+   Dsssd(std::string alias);
    void reset();
-   bool set_variables(const char* dbfile);
-   //void read_data(const vme::V785 adcs[], const vme::V1190 &tdc);
-   void read_data(void);
+   bool set_variables(const char *dbfile);
    void read_data(const midas::Event &event);
    void calculate();
 

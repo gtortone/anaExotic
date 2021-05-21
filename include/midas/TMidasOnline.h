@@ -7,15 +7,14 @@
 
   Contents:     C++ MIDAS analyzer
 
-  $Id: TMidasOnline.h 139 2013-09-05 21:08:57Z lindner $
+  $Id$
 
 \********************************************************************/
 
-
-#include <stdio.h>
 #include <string>
+#include <vector>
 
-#include "VirtualOdb.h"
+#include "midas.h"
 
 /// Request events from online shared memory data buffer
 
@@ -24,7 +23,7 @@ struct EventRequest
 public:
   EventRequest* fNext;          ///< (internal use) list of all requests
   std::string   fBufferName;    ///< name of the midas data buffer, e.g. "SYSTEM"
-  int           fBufferHandle;  ///< buffer handle from bm_open_buffer()
+  HNDLE         fBufferHandle;  ///< buffer handle from bm_open_buffer()
   int           fEventId;       ///< request event ID
   int           fTriggerMask;   ///< request trigger mask
   int           fSamplingType;  ///< sampling type
@@ -33,7 +32,15 @@ public:
 
 /// MIDAS online connection, including access to online ODB
 
-class TMidasOnline : public VirtualOdb
+class TMHandlerInterface
+{
+ public:
+  virtual ~TMHandlerInterface();
+  virtual void Transition(int transition, int run_number, int transition_time) = 0;
+  virtual void Event(const void* data, int data_size) = 0;
+};
+
+class TMidasOnline
 {
 public:
 
@@ -48,7 +55,7 @@ public:
   std::string fHostname; ///< hostname where the mserver is running, blank if using shared memory
   std::string fExptname; ///< experiment name, blank if only one experiment defined in exptab
 
-  int  fDB; ///< ODB handle
+  HNDLE fDB; ///< ODB handle
 
   TransitionHandler fStartHandler;
   TransitionHandler fStopHandler;
@@ -57,6 +64,8 @@ public:
 
   EventRequest*     fEventRequests;
   EventHandler      fEventHandler;
+
+  std::vector<TMHandlerInterface*> fHandlers;
 
 private:
   /// TMidasOnline is a singleton class: only one
@@ -78,8 +87,11 @@ public:
   /// Disconnect from MIDAS
   int disconnect();
 
-  /// Check for MIDAS events (run transitions, data requests)
+  /// Check for all MIDAS events (new data events, run transitions)
   bool poll(int mdelay);
+
+  /// Sleep while checking for and answering MIDAS RPC requests (run transitions, etc)
+  bool sleep(int mdelay);
 
   // run transitions functions
 
@@ -112,16 +124,7 @@ public:
   /// Get buffer size
   int getBufferSize();
 
-  // ODB functions required by VirtualOdb
-
-  int      odbReadArraySize(const char*name);
-  int      odbReadAny(   const char*name, int index, int tid,void* buf, int bufsize = 0);
-  int      odbReadInt(   const char*name, int index = 0, int      defaultValue = 0);
-  uint32_t odbReadUint32(const char*name, int index = 0, uint32_t defaultValue = 0);
-  double   odbReadDouble(const char*name, int index = 0, double   defaultValue = 0);
-  float    odbReadFloat(const char*name, int index = 0, float   defaultValue = 0);
-  bool     odbReadBool(  const char*name, int index = 0, bool     defaultValue = false);
-  const char* odbReadString(const char*name, int index = 0,const char* defaultValue = NULL);
+  void RegisterHandler(TMHandlerInterface* h);
 };
 
 //end

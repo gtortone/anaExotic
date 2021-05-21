@@ -14,22 +14,23 @@
 #include "midas/Database.h"
 #include "rootana/Callbacks.h"
 #include "rootana/Directory.h"
+#include "rootana/Globals.h"
 #include "rootana/HistParser.h"
 #include "rootana/Histos.h"
 #include "rootana/Timer.h"
 #include "utils/Functions.h"
-#include "rootana/Globals.h"
+#include "utils/json.hpp"
 
 namespace {
 
 const uint32_t TS_DIAGNOSTICS_EVENT = 6;
 
 template <class T, class E>
-inline void unpack_event(T &data, const E &buf) {
-   data.reset();
-   data.read_data(buf);
-   //data.unpack(buf);
-   data.calculate();
+inline void unpack_event(T *data, const E &buf) {
+   std::cout << "detector name: " << data->getName() << std::endl;
+   data->reset();
+   data->read_data(buf);
+   data->calculate();
 }
 
 } // namespace
@@ -81,7 +82,7 @@ rootana::App::App(const char *appClassName, Int_t *argc, char **argv) : TApplica
       gROOT->cd();
       fOnlineHists.reset(new rootana::OnlineDirectory());
       char address[100];
-      sprintf(address,"http:%i",fHttp);
+      sprintf(address, "http:%i", fHttp);
       fHttpServ = new THttpServer(address);
       fOnlineHists->Open(fTcp, fHistosOnline.c_str());
    }
@@ -113,14 +114,14 @@ void rootana::App::process_argv(int argc, char **argv) {
          fHost = iarg->substr(2);
       else if (iarg->compare(0, 2, "-E") == 0)
          fExpt = iarg->substr(2);
-      //else if (iarg->compare(0, 6, "-Qtime") == 0)
-      //   fQueue.reset(tstamp::NewOwnedQueue(atof(iarg->substr(6).c_str()), this));
       else if (iarg->compare(0, 6, "-Ctime") == 0)
          fCoincWindow = atof(iarg->substr(6).c_str());
       else if (iarg->compare("-histos") == 0)
          fHistos = *(++iarg);
       else if (iarg->compare("-histos0") == 0)
          fHistosOnline = *(++iarg);
+      else if (iarg->compare("-detectors") == 0)
+         fDetectors = *(++iarg);
       else if (iarg->compare(0, 1, "-") == 0)
          this->help();
       else {
@@ -135,7 +136,7 @@ void rootana::App::handle_event(midas::Event &event) {
 	 * Handles events in the following ways:
 	 */
 
-   exotic::utils::Info("", __FILE__, __LINE__) << "inside rootana::App::handle_event";
+   std::cout << "inside rootana::App::handle_event" << std::endl;
    Process(event);
 }
 
@@ -148,10 +149,10 @@ IT FindSerial(IT begin_, IT end_, uint32_t value) {
 }
 
 void rootana::App::Process(const midas::Event &event) {
-   const uint16_t EID = event.GetEventId();
-
-   unpack_event(rootana::det, event);
-   fill_hists(EID);
+   for (uint i = 0; i < rootana::DsssdList.size(); i++) {
+      unpack_event(rootana::DsssdList[i], event);
+   }
+   fill_hists(0);
 }
 
 int rootana::App::midas_online(const char *host, const char *experiment) {
@@ -179,6 +180,7 @@ int rootana::App::midas_online(const char *host, const char *experiment) {
    (*fMidasOnline)->setEventHandler(rootana_handle_event);
    (*fMidasOnline)->eventRequest("SYSTEM", -1, -1, (1 << 1));
 
+#if 0
    /*! Open output file */
    TString dataDir = (*fMidasOnline)->odbReadString("/Logger/Data dir");
    TString dataDir2 = dataDir + "/rootfiles";
@@ -194,8 +196,10 @@ int rootana::App::midas_online(const char *host, const char *experiment) {
       else
          dataDir2 = ".";
    }
+#endif
 
-   fOutputFile.reset(new rootana::OfflineDirectory(dataDir2));
+   //fOutputFile.reset(new rootana::OfflineDirectory(dataDir2));
+   fOutputFile.reset(new rootana::OfflineDirectory("."));
 
    /*! - Fill "present run" parameters */
    std::string whichParam = "/runinfo/Run number";
@@ -240,6 +244,7 @@ void rootana::App::Run(Bool_t) {
    case ONLINE:
 #ifdef MIDASSYS
       fReturn = midas_online(fHost.c_str(), fExpt.c_str());
+      std::cout << "call midas_online" << std::endl;
 #else
       fprintf(stderr, "Can't run in online mode without MIDAS libraries.\n");
       fReturn = 1;
@@ -275,19 +280,13 @@ void rootana::App::run_start(int runnum) {
 	 */
    fRunNumber = runnum;
 
-   /// Reset head and tail scalers (count -> zero)
-   // rootana::gHeadScaler.reset();
-   // rootana::gTailScaler.reset();
-   // rootana::gDiagnostics.reset();
-   rootana::det.reset();
+   std::ifstream infile(fDetectors);
+   if (!infile.good()) {
+      exotic::utils::Error("rootana") << "Detectors file " << fDetectors << " does not exists";
+      Terminate(1);
+   }
 
-   /// Read variables from the ODB
-   // rootana::gHead.set_variables("online");
-   // rootana::gTail.set_variables("online");
-   // rootana::gCoinc.set_variables("online");
-   // rootana::gHeadScaler.set_variables("online", "head");
-   // rootana::gTailScaler.set_variables("online", "tail");
-   rootana::det.set_variables("online");
+   process_json();
 
    bool opened = fOutputFile->Open(runnum, fHistos.c_str());
    if (!opened)
@@ -311,14 +310,98 @@ void rootana::App::fill_hists(uint16_t eid) {
    fOnlineHists->CallForAll(&rootana::HistBase::fill);
 }
 
+void rootana::App::process_json(void) {
+   std::ifstream file(fDetectors);
+   nlohmann::json j = nlohmann::json::parse(file);
+   std::string type, name;
+
+   DetTable.clear();
+   for (uint i = 0; i < j.size(); i++) {
+
+      if (j[i]["type"].is_null()) {
+         exotic::utils::Error("rootana") << "Detector type not specified";
+         Terminate(1);
+      }
+
+      type = j[i]["type"];
+
+      if (j[i]["name"].is_null()) {
+         exotic::utils::Error("rootana") << "Detector name not specified";
+         Terminate(1);
+      }
+
+      name = j[i]["name"];
+
+      ///
+      /// DSSD detector
+      ///
+      if (exotic::utils::toLower(type) == "dsssd") {
+         DsssdList.push_back(new exotic::Dsssd(name));
+         exotic::utils::Info("rootana") << "Detector type " << type << " with name " << name << " allocated";
+         exotic::Dsssd *det = DsssdList.back();
+
+         for (uint k = 0; k < j[i]["link"].size(); k++) {
+            if (j[i]["link"][k]["id"].is_null()) {
+               exotic::utils::Error("rootana") << "Detector name " << name << " missing id";
+               Terminate(1);
+            }
+            uint id = j[i]["link"][k]["id"];
+
+            if (j[i]["link"][k]["board"].is_null()) {
+               exotic::utils::Error("rootana") << "Detector name " << name << " missing board number";
+               Terminate(1);
+            }
+            //det->variables.adc.board[id] = j[i]["link"][k]["board"];
+
+            if (j[i]["link"][k]["module"].is_null()) {
+               exotic::utils::Error("rootana") << "Detector name " << name << " missing module number";
+               Terminate(1);
+            }
+            det->variables.adc.module[id] = j[i]["link"][k]["module"];
+
+            if (j[i]["link"][k]["module"].is_null()) {
+               exotic::utils::Error("rootana") << "Detector name " << name << " missing channel number";
+               Terminate(1);
+            }
+            det->variables.adc.channel[id] = j[i]["link"][k]["channel"];
+
+            if (j[i]["link"][k]["slope"].is_null())
+               det->variables.adc.slope[id] = 1;
+            else
+               det->variables.adc.slope[id] = j[i]["link"][k]["slope"];
+
+            if (j[i]["link"][k]["offset"].is_null())
+               det->variables.adc.offset[id] = 0;
+            else
+               det->variables.adc.offset[id] = j[i]["link"][k]["offset"];
+
+            if (j[i]["link"][k]["pedestal"].is_null())
+               det->variables.adc.pedestal[id] = 0;
+            else
+               det->variables.adc.pedestal[id] = j[i]["link"][k]["pedestal"];
+         }
+      } else {
+         exotic::utils::Error("rootana") << "Detector type " << type << " not correct";
+         Terminate(1);
+      }
+
+      ///
+      /// add detectors here
+      ///
+   }
+   
+   exotic::utils::fillNameTable();
+}
+
 void rootana::App::help() {
    printf("\nUsage:\n");
-   printf("\n./anaExotic [-h] [-histos <histogram file>] [-histos0 <histogram file>] [-Qtime] [-Ctime] [-Hhostname] [-Eexptname] [-eMaxEvents] [-P9091] [file1 file2 ...]\n");
+   printf("\n./anaExotic [-h] [-histos <histogram file>] [-histos0 <histogram file>] [-detectors <detectors file>] [-Qtime] [-Ctime] [-Hhostname] [-Eexptname] [-eMaxEvents] [-P9091] [file1 file2 ...]\n");
    printf("\n");
    printf("\t-h: print this help message\n");
    printf("\t-T: test mode - start and serve a test histogram\n");
    printf("\t-histos: Specify offline/online histogram definition file\n");
    printf("\t-histos0: Specify online *only* histogram definition file\n");
+   printf("\t-detectors: Specify detectors definition file (json)\n");
    printf("\t-Hhostname: connect to MIDAS experiment on given host\n");
    printf("\t-Eexptname: connect to this MIDAS experiment\n");
    printf("\t-Ctime: Set coincidence matching window in microseconds (default: 10.0)\n");

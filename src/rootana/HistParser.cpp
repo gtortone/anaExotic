@@ -5,6 +5,7 @@
 #include <TDirectory.h>
 #include "midas.h"
 #include "utils/ErrorExotic.h"
+#include "utils/Functions.h"
 #include "rootana/Histos.h"
 #include "rootana/Directory.h"
 #include "rootana/HistParser.h"
@@ -174,10 +175,20 @@ void rootana::HistParser::handle_hist(const char* type)
 		}
 	}
 
+	// replace detector name (e.g. "front") with array element (e.g. "DsssdList[0]"")
+	for(int i=0; i<3; i++) {
+		if(spar[i] == "") continue;
+		std::cout << "spar[" << i << "] = " << spar[i] << std::endl;
+		std::string key = exotic::utils::trim(spar[i].substr(0, spar[i].find('-')));
+		spar[i] = exotic::utils::replaceString(spar[i], key, DetTable[key]);
+		std::cout << "spar[" << i << "] = " << spar[i] << std::endl;
+	}
+
 	std::stringstream cmdParam[3];
 	rootana::DataPointer* data[3];
 	for (int i=0; i< npar; ++i) {
 		cmdParam[i] << "rootana::DataPointer::New(" << spar[i] << ");";
+		std::cout << "data[" << i << "] = " << cmdParam[i].str() << std::endl;
 		data[i] = (rootana::DataPointer*)gROOT->ProcessLineFast(cmdParam[i].str().c_str());
 		if (!data[i]) throw_bad_line (spar[i], lpar[i], fFilename);
 	}

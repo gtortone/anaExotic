@@ -24,7 +24,7 @@ namespace rootana {
 
 class MidasOnline;
 
-/// Application class for dragon rootana
+/// Application class for exotic rootana
 class App : public TApplication {
 
    /// Tells the running mode of the application
@@ -43,16 +43,13 @@ class App : public TApplication {
    std::string fHost;                                      ///< Online host name
    std::string fExpt;                                      ///< Online experiment name
    std::string fHistos;                                    ///< Histogram specification file (online + file)
+   std::string fDetectors;                                 ///< Detectors specification file (json)
    std::string fHistosOnline;                              ///< Histogram specification file (online only)
    THttpServer *fHttpServ;                                 ///< HTTP server handler
    std::unique_ptr<rootana::OfflineDirectory> fOutputFile; ///< Online/offline histograms
    std::unique_ptr<rootana::OnlineDirectory> fOnlineHists; ///< Online-only histograms
    std::unique_ptr<midas::Database> fOdb;                  ///< Online/offline database
-   //std::unique_ptr<tstamp::Queue> fQueue;                  ///< Timestamping queue
    std::unique_ptr<MidasOnline> fMidasOnline;              ///< "Online midas" instance
-
-   //std::list<dragon::Head> fHeadProcessed;               ///< Head events already unpacked
-   //std::list<dragon::Tail> fTailProcessed;               ///< Tail events already unpacked
 
  public:
    /// Calls TApplication constructor
@@ -82,20 +79,11 @@ class App : public TApplication {
    /// Tells how to handle a singles event from the beginning of fQueue
    void Process(const midas::Event &event);
 
-   /// Tells how to handle a coincidence event from the beginning of fQueue
-   void Process(const midas::Event &event1, const midas::Event &event2);
-
-   /// Tells how to handle a timstamtp diagnostics event
-   void Process(tstamp::Diagnostics *diagnostics);
-
-   /// Returns coincidence window
-   double GetCoincWindow() { return fCoincWindow; }
-
    /// Process an offline MIDAS file
    int midas_file(const char *fname);
 
    /// Process online MIDAS data
-   int midas_online(const char *host = "", const char *experiment = "dragon");
+   int midas_online(const char *host = "", const char *experiment = "exotic");
 
    /// Deletes fQueue if it's non-null;
    ~App();
@@ -112,6 +100,9 @@ class App : public TApplication {
 
    /// Fills all histos w/ a specific event ID
    void fill_hists(uint16_t eid);
+
+   /// Process detectors JSON file
+   void process_json(void);
 
    ClassDef(rootana::App, 0);     // rootana
 };

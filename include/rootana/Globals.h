@@ -1,8 +1,9 @@
 #ifndef ROOTANA_GLOBALS_H
 #define ROOTANA_GLOBALS_H
 
-// EXOTIC Globals //
 #include "utils/Exotic.h"
+#include <vector>
+#include <map>
 
 #ifndef G__DICTIONARY
 /// Provide 'extern' linkage except in CINT dictionary
@@ -13,28 +14,11 @@
 
 namespace rootana {
 
-/// Global timestamp diagnostics class
-//EXTERN tstamp::Diagnostics gDiagnostics;
+EXTERN std::vector<exotic::Dsssd *> DsssdList;
+// EXTERN std::vector<exotic::Ppac *> PpacList;
+// EXTERN std::vector<exotic::Si *> SiList;
 
-EXTERN exotic::Dsssd det;
-
-// /// Gloal gamma event class
-// EXTERN dragon::Head gHead;
-
-// /// Global heavy-ion event class
-// EXTERN dragon::Tail gTail;
-
-// /// Global coincidence event class
-// EXTERN dragon::Coinc gCoinc;
-
-// /// Global head scaler class
-// EXTERN dragon::Scaler gHeadScaler;
-
-// /// Global tail scaler class
-// EXTERN dragon::Scaler gTailScaler;
-
-// /// Global epics clas
-// EXTERN dragon::Epics gEpics;
+EXTERN std::map<std::string, std::string> DetTable;
 
 }
 

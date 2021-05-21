@@ -1,0 +1,58 @@
+[{
+	"type": "Dsssd",
+	"name": "front",
+	"link": [
+		{
+			"id": 0,
+			"board": 0,
+			"module": 6,
+			"channel": 0,
+			"slope": 0.2
+		},
+		{
+			"id": 1,
+			"board": 0,
+			"module": 3,
+			"channel": 1
+		},
+		{
+			"id": 2,
+			"board": 0,
+			"module": 5,
+			"channel": 2
+		}
+	]
+},
+{
+	"type": "Dsssd",
+	"name": "back",
+	"link": [
+		{
+			"id": 0,
+			"board": 1,
+			"module": 1,
+			"channel": 0,
+			"slope": 1,
+			"offset": 0,
+			"pedestal": 0
+		},
+		{
+			"id": 1,
+			"board": 1,
+			"module": 2,
+			"channel": 0,
+			"slope": 1,
+			"offset": 0,
+			"pedestal": 0
+		},
+		{
+			"id": 2,
+			"board": 1,
+			"module": 3,
+			"channel": 0,
+			"slope": 1,
+			"offset": 0,
+			"pedestal": 0
+		}
+	]
+}]

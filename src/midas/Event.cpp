@@ -65,32 +65,12 @@ void midas::Event::CopyDerived(const midas::Event &other) {
    TMidasEvent::Copy(other);
 }
 
-// void midas::Event::CopyFifo(std::vector<uint64_t> *pfifo) const {
-//    /*!
-// 	 * \attention Input pointer must point to an array w/ length >= 4.
-// 	 */
-//    for (uint32_t i = 0; i < MAX_FIFO; ++i) {
-//       (pfifo + i)->clear();
-//       (pfifo + i)->resize(fFifo[i].size());
-//       std::copy(fFifo[i].begin(), fFifo[i].end(), pfifo[i].begin());
-//    }
-// }
-
 void midas::Event::PrintSingle(FILE *where) const {
    std::stringstream sstr;
    sstr << "Singles event: id, ser, trig, clock: "
         << GetEventId() << ", " << GetSerialNumber() << ", " << fTriggerTime << ", " << fClock;
    fprintf(where, "%s\n", sstr.str().c_str());
 }
-
-// void midas::Event::PrintCoinc(const Event &other, FILE *where) const {
-//    std::stringstream sstr;
-//    sstr << "Coincidence event: id[0], ser[0], t[0], clk[0], id[1], ser[1], t[1], clk[1] | t[0]-t[1]: "
-//         << GetEventId() << ", " << GetSerialNumber() << ", " << fTriggerTime << ", " << fClock << ", "
-//         << other.GetEventId() << ", " << other.GetSerialNumber() << ", " << other.fTriggerTime << ", "
-//         << other.fClock << ", " << TimeDiff(other);
-//    fprintf(where, "%s\n", sstr.str().c_str());
-// }
 
 void midas::Event::Init(const char *tsbank, const void *header, const void *addr, int size) {
    memcpy(GetEventHeader(), header, sizeof(midas::Event::Header));
@@ -159,25 +139,3 @@ double midas::Event::TimeDiff(const Event &other) const {
 	 */
    return fTriggerTime - other.fTriggerTime;
 }
-
-// midas::CoincEvent::CoincEvent(const Event &event1, const Event &event2) : fGamma(0), fHeavyIon(0) {
-//    if (event1.GetEventId() == DRAGON_HEAD_EVENT && event2.GetEventId() == DRAGON_TAIL_EVENT) {
-//       fGamma = &event1;
-//       fHeavyIon = &event2;
-//    } else if (event1.GetEventId() == DRAGON_TAIL_EVENT && event2.GetEventId() == DRAGON_HEAD_EVENT) {
-//       fGamma = &event2;
-//       fHeavyIon = &event1;
-//    } else {
-//       dragon::utils::Warning("CoincMidasEvent::CoincMidasEvent")
-//           << "Don't know how to handle the passed events: "
-//           << "Id1 = " << event1.GetEventId() << ", Id2 = " << event2.GetEventId()
-//           << ", Serial 1 = " << event1.GetSerialNumber() << ", Serial 2 = " << event2.GetSerialNumber()
-//           << ", Sys time 1 = " << event1.GetTimeStamp() << ", Sys time 2 = " << event2.GetTimeStamp()
-//           << ", trig1 = " << event1.ClockTime() << ", trig2 = " << event2.ClockTime()
-//           << ", time diff = " << event1.TimeDiff(event2)
-//           << ". Setting fGamma and fHeavyIon to NULL...\n";
-//    }
-//    if (fGamma && fHeavyIon) {
-//       xtrig = fHeavyIon->TimeDiff(*fGamma);
-//    }
-// }

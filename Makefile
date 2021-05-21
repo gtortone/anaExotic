@@ -27,6 +27,7 @@ INCLUDE_LIB_DIRS = $(MIDASSYS)/lib $(shell root-config --libdir)
 INCLUDE_LIB = $(foreach includedir,$(INCLUDE_LIB_DIRS),-L$(includedir))
 
 # Set compiler, preprocesor and linker flags
+CXXFLAGS += -O3
 CPPFLAGS += -Wall -Wno-unused-result -Wno-deprecated-declarations -DMIDASSYS
 LDFLAGS += $(INCLUDE_LIB)
 LIBS = $(MIDASSYS)/lib/libmidas.a $(MIDASSYS)/lib/librootana.a
