@@ -177,9 +177,9 @@ int rootana::App::midas_online(const char *host, const char *experiment) {
    (*fMidasOnline)->setEventHandler(rootana_handle_event);
    (*fMidasOnline)->eventRequest("SYSTEM", -1, -1, (1 << 1));
 
-#if 0
    /*! Open output file */
-   TString dataDir = (*fMidasOnline)->odbReadString("/Logger/Data dir");
+   //TString dataDir = (*fMidasOnline)->odbReadString("/Logger/Data dir");
+   TString dataDir = "/opt/midas/online";
    TString dataDir2 = dataDir + "/rootfiles";
 
    void *d = gSystem->OpenDirectory(dataDir2);
@@ -193,10 +193,8 @@ int rootana::App::midas_online(const char *host, const char *experiment) {
       else
          dataDir2 = ".";
    }
-#endif
 
-   //fOutputFile.reset(new rootana::OfflineDirectory(dataDir2));
-   fOutputFile.reset(new rootana::OfflineDirectory("."));
+   fOutputFile.reset(new rootana::OfflineDirectory(dataDir2));
 
    /*! - Fill "present run" parameters */
    std::string whichParam = "/runinfo/Run number";

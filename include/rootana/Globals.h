@@ -1,8 +1,6 @@
 #ifndef ROOTANA_GLOBALS_H
 #define ROOTANA_GLOBALS_H
 
-#include <map>
-#include <vector>
 #include "rootana/DetectorContainer.h"
 
 #ifndef G__DICTIONARY

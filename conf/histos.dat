@@ -11,7 +11,7 @@ TH1D:
 
 TH1D:
    ("h2", "Title 2", 16384, 0, 16383)
-   detList.getDsssd("front")->ecal[0]
+   DSSSD("back")->ecal[0]
 
 TH1D:
    ("h3", "Title 3", 16384, 0, 16383)

@@ -1,7 +1,6 @@
 #ifndef EXOTIC_UTILS_FUNCTIONS_HXX
 #define EXOTIC_UTILS_FUNCTIONS_HXX
 
-#include "rootana/Globals.h"
 #include "utils/IntTypes.h"
 #include "utils/Valid.h"
 #include <functional>
