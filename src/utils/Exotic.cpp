@@ -30,7 +30,7 @@ uint16_t channel_map(int module, int channel, const midas::Event &event, int num
    }
 
    sample = data[((snum + 1) * (channel + 1)) + number];
-   std::cout << "module: " << module << " channel: " << channel << " sample: " << sample << std::endl;
+   //std::cout << "module: " << module << " channel: " << channel << " sample: " << sample << std::endl;
    return sample;
 }
 

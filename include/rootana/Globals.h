@@ -1,9 +1,9 @@
 #ifndef ROOTANA_GLOBALS_H
 #define ROOTANA_GLOBALS_H
 
-#include "utils/Exotic.h"
-#include <vector>
 #include <map>
+#include <vector>
+#include "rootana/DetectorContainer.h"
 
 #ifndef G__DICTIONARY
 /// Provide 'extern' linkage except in CINT dictionary
@@ -12,15 +12,11 @@
 #define EXTERN
 #endif
 
-namespace rootana {
+//namespace rootana {
 
-EXTERN std::vector<exotic::Dsssd *> DsssdList;
-// EXTERN std::vector<exotic::Ppac *> PpacList;
-// EXTERN std::vector<exotic::Si *> SiList;
+EXTERN DetectorContainer detList;
 
-EXTERN std::map<std::string, std::string> DetTable;
-
-}
+//} // namespace rootana
 
 
 #endif // end

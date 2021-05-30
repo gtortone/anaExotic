@@ -1,5 +1,6 @@
 #ifndef EXOTIC_UTILS_FUNCTIONS_HXX
 #define EXOTIC_UTILS_FUNCTIONS_HXX
+
 #include "rootana/Globals.h"
 #include "utils/IntTypes.h"
 #include "utils/Valid.h"
@@ -35,15 +36,6 @@ inline void set_bank_name(const midas::Bank_t from, midas::Bank_t to) {
 }
 
 #endif
-
-inline void fillNameTable(void) {
-   for (uint i = 0; i < rootana::DsssdList.size(); i++) {
-      std::stringstream s;
-		s << "DsssdList[" << i << "]";
-      rootana::DetTable[rootana::DsssdList[i]->getName()] = s.str();
-      std::cout << "fillNameTable: " << s.str() << std::endl;
-   }
-}
 
 const std::string WHITESPACE = " \n\r\t\f\v";
 

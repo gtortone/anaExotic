@@ -12,6 +12,5 @@
 #pragma link C++ class rootana::App+;
 #pragma link C++ class rootana::DataPointer+;
 #pragma link C++ class rootana::Cut+;
-#pragma link C++ class exotic::Dsssd+;
 
 #endif

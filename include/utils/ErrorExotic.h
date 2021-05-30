@@ -119,24 +119,24 @@ namespace utils {
 /// Specialized Strm class to print informational messages
 struct Info : public Strm {
    Info(const char *where, const char *file = "", int line = -1, bool = true) : Strm("Info", where, file, line, std::cout, gErrorIgnoreLevel > 1000) {
-      if (gErrorIgnoreLevel > 1000)
-         fStream = &NullStream;
+      //if (gErrorIgnoreLevel > 1000)
+      //   fStream = &NullStream;
    }
 };
 
 /// Specialized Strm class to print error messages
 struct Error : public Strm {
    Error(const char *where, const char *file = "", int line = -1, bool = true) : Strm("Error", where, file, line, std::cerr, gErrorIgnoreLevel > 3000) {
-      if (gErrorIgnoreLevel > 3000)
-         fStream = &NullStream;
+      //if (gErrorIgnoreLevel > 3000)
+      //   fStream = &NullStream;
    }
 };
 
 /// Specialized Strm class to print warning messages
 struct Warning : public Strm {
    Warning(const char *where, const char *file = "", int line = -1, bool = true) : Strm("Warning", where, file, line, std::cerr, gErrorIgnoreLevel > 2000) {
-      if (gErrorIgnoreLevel > 2000)
-         fStream = &NullStream;
+      //if (gErrorIgnoreLevel > 2000)
+      //   fStream = &NullStream;
    }
 };
 

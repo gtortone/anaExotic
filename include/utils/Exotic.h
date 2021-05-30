@@ -1,7 +1,6 @@
 #ifndef HAVE_EXOTIC_H_
 #define HAVE_EXOTIC_H_
 
-#include "midas/Database.h"
 #include "midas/Event.h"
 #include "utils/VariableStructs.h"
 #include <stdint.h>
@@ -44,6 +43,8 @@ class Dsssd : public Detector {
    void calculate();
 
  public:
+   // Raw values
+   uint raw[MAX_CHANNELS];
    // Calibrated energy signals
    double ecal[MAX_CHANNELS];
    // Number of connected detector links

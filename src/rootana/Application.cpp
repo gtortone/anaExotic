@@ -27,7 +27,7 @@ const uint32_t TS_DIAGNOSTICS_EVENT = 6;
 
 template <class T, class E>
 inline void unpack_event(T *data, const E &buf) {
-   std::cout << "detector name: " << data->getName() << std::endl;
+   //std::cout << "detector name: " << data->getName() << std::endl;
    data->reset();
    data->read_data(buf);
    data->calculate();
@@ -147,9 +147,8 @@ IT FindSerial(IT begin_, IT end_, uint32_t value) {
 }
 
 void rootana::App::Process(const midas::Event &event) {
-   for (uint i = 0; i < rootana::DsssdList.size(); i++) {
-      unpack_event(rootana::DsssdList[i], event);
-   }
+   for(int i=0; i<detList.DsssdSize(); i++)
+      unpack_event(detList.getDsssd(i), event);
    fill_hists(0);
 }
 
@@ -299,7 +298,10 @@ void rootana::App::run_stop(int runnum) {
 	 *  save histograms, closes output root file.
 	 */
    fRunNumber = runnum;
-   fOutputFile->Close();
+   fOutputFile->Close();         // includes fOnlineHists->Close();
+
+   detList.clear();
+
    exotic::utils::Info("rootana") << "End of run " << runnum;
 }
 
@@ -313,7 +315,6 @@ void rootana::App::process_json(void) {
    nlohmann::json j = nlohmann::json::parse(file);
    std::string type, name;
 
-   DetTable.clear();
    for (uint i = 0; i < j.size(); i++) {
 
       if (j[i]["type"].is_null()) {
@@ -334,9 +335,10 @@ void rootana::App::process_json(void) {
       /// DSSD detector
       ///
       if (exotic::utils::toLower(type) == "dsssd") {
-         DsssdList.push_back(new exotic::Dsssd(name));
+
+         detList.create(exotic::utils::toLower(type), name);
          exotic::utils::Info("rootana") << "Detector type " << type << " with name " << name << " allocated";
-         exotic::Dsssd *det = DsssdList.back();
+         exotic::Dsssd *det = detList.getDsssd(name);
 
          for (uint k = 0; k < j[i]["link"].size(); k++) {
             uint id = k;
@@ -385,8 +387,6 @@ void rootana::App::process_json(void) {
       /// add detectors here
       ///
    }
-
-   exotic::utils::fillNameTable();
 }
 
 void rootana::App::help() {
