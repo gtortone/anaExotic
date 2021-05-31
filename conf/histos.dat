@@ -1,7 +1,3 @@
-CMD:
-   .L /opt/anaExotic/conf/myFunctions.C
-END:
-
 DIR:
    histos/event
 
@@ -11,21 +7,25 @@ TH1D:
 
 TH1D:
    ("h2", "Title 2", 16384, 0, 16383)
-   DSSSD("back")->ecal[0]
+  DSSSD("front")->ecal[0]
 
 TH1D:
    ("h3", "Title 3", 16384, 0, 16383)
    DSSSD("front")->ecal[0]
 
+TH1D:
+   ("h4", "Title 3", 16384, 0, 16383)
+   myfunc4()
+
 TH2D:
-   ("h4", "Title 2", 512, 0, 16383, 512, 0, 16383)
+   ("h5", "Title 2", 512, 0, 16383, 512, 0, 16383)
    DSSSD("front")->ecal[0]
    DSSSD("front")->ecal[1]
 CUT:
    Greater(DSSSD("front")->ecal[0], 1500)
 
 TH2D:
-   ("h5", "Title 6", 512, 0, 16383, 512, 0, 16383)
+   ("h6", "Title 6", 512, 0, 511, 512, 0, 511)
    myfunc1()
-   myfunc2()
+   myfunc1()
 

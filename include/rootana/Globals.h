@@ -10,11 +10,6 @@
 #define EXTERN
 #endif
 
-//namespace rootana {
-
 EXTERN DetectorContainer detList;
-
-//} // namespace rootana
-
 
 #endif // end

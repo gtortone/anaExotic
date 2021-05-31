@@ -1,13 +1,14 @@
 #include "rootana/HistParser.h"
 #include "midas.h"
+#include "rootana/DetectorContainer.h"
 #include "rootana/Directory.h"
 #include "rootana/Histos.h"
-#include "rootana/DetectorContainer.h"
 #include "utils/ErrorExotic.h"
 #include <TDirectory.h>
+#include <TError.h>
 #include <TInterpreter.h>
 #include <TROOT.h>
-#include <TError.h>
+#include <TSystem.h> // for gSystem
 #include <algorithm>
 #include <sstream>
 #include <stdexcept>
@@ -15,11 +16,11 @@
 // HELPER FUNCTIONS & CLASSES //
 
 /// Helper macro
-#define CHECK_ERROR(code)                                \
-   do {                                                  \
-      if (code != TInterpreter::EErrorCode::kNoError) {  \
+#define CHECK_ERROR(code)                                    \
+   do {                                                      \
+      if (code != TInterpreter::EErrorCode::kNoError) {      \
          Error("HistParser", "Failed on line %i", __LINE__); \
-      }                                                  \
+      }                                                      \
    } while (false)
 
 namespace {
@@ -355,9 +356,15 @@ void rootana::HistParser::add_hist(rootana::HistBase *hst, UShort_t type) {
 }
 
 void rootana::HistParser::Run() {
-   
+
+   std::string line;
+   std::string funcFile = "/opt/anaExotic/conf/myFunctions.C";
+   std::ifstream infile(funcFile);
+
    gROOT->ProcessLine("using namespace rootana;");
-   //gROOT->ProcessLine("extern DetectorContainer detList;");
+   while (std::getline(infile, line)) 
+      gROOT->ProcessLine(line.c_str());
+
    while (read_line()) {
       try {
          if (contains(fLine, "DIR:"))

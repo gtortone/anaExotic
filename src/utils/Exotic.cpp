@@ -57,6 +57,7 @@ void exotic::Dsssd::reset() {
 }
 
 void exotic::Dsssd::read_data(const midas::Event &event) {
+   channel_map(raw, validLinks, variables.adc.channel, variables.adc.module, event);
    channel_map(ecal, validLinks, variables.adc.channel, variables.adc.module, event);
 }
 

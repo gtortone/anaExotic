@@ -1,7 +1,9 @@
 #include "conf/helpers.h"
 
+#include "TMath.h"
+
 double myfunc1(void) {
-   return DSSSD("front")->ecal[1];
+   return TMath::Sqrt(DSSSD("front")->ecal[0]);
 }
 
 double myfunc2(void) {
@@ -10,4 +12,9 @@ double myfunc2(void) {
 
 double myfunc3(void) {
    return (DSSSD("front")->ecal[0] * 2);
+}
+
+double myfunc4(void) {
+   //printf("%d\n", DSSSD("front")->raw[0]);
+   return DSSSD("front")->raw[0];
 }
