@@ -1,0 +1,86 @@
+[{
+	"type": "Mcp",
+	"name": "A",
+	"link": [
+		{
+			"comment": "UP_E",
+			"board": 0,
+			"module": 0,
+			"channel": 0,
+			"slope": 1,
+			"offset": -4350
+		},
+		{
+			"comment": "UP_T",
+			"board": 0,
+			"module": 0,
+			"channel": 1,
+			"slope": 1,
+			"offset": 0
+		},
+		{
+			"comment": "DOWN_E",
+			"board": 0,
+			"module": 0,
+			"channel": 2,
+			"slope": 1,
+			"offset": -4350
+		},
+		{
+			"comment": "DOWN_T",
+			"board": 0,
+			"module": 0,
+			"channel": 3,
+			"slope": 1,
+			"offset": 0
+		},
+		{
+			"comment": "RIGHT_E",
+			"board": 0,
+			"module": 0,
+			"channel": 4,
+			"slope": 1,
+			"offset": -4350
+		},
+		{
+			"comment": "RIGHT_T",
+			"board": 0,
+			"module": 0,
+			"channel": 5,
+			"slope": 1,
+			"offset": 0
+		},
+		{
+			"comment": "LEFT_E",
+			"board": 0,
+			"module": 0,
+			"channel": 6,
+			"slope": 1,
+			"offset": -4350
+		},
+		{
+			"comment": "LEFT_T",
+			"board": 0,
+			"module": 0,
+			"channel": 7,
+			"slope": 1,
+			"offset": 0
+		},
+		{
+			"comment": "CATHODE_E",
+			"board": 0,
+			"module": 0,
+			"channel": 8,
+			"slope": 1,
+			"offset": -4350
+		},
+		{
+			"comment": "CATHODE_T",
+			"board": 0,
+			"module": 0,
+			"channel": 9,
+			"slope": 1,
+			"offset": 0
+		}
+	]
+}]

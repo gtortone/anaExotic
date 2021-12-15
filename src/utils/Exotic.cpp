@@ -52,7 +52,6 @@ exotic::Dsssd::Dsssd(std::string alias) : Detector(alias), variables() {
 }
 
 void exotic::Dsssd::reset() {
-   //eutils::reset_data(efront, eback, hit_front, hit_back, tfront, tback);
    eutils::reset_array(MAX_CHANNELS, ecal);
 }
 
@@ -62,13 +61,6 @@ void exotic::Dsssd::read_data(const midas::Event &event) {
 }
 
 void exotic::Dsssd::calculate() {
-   /*!
-	 * Does a linear transformation on each element in \c this->ecal[] using the slopes and offsets
-	 * from variables.adc_slope and variables.adc_offset, respectively.
-	 *
-	 * Delegates the work to eutils::linear_calibrate
-	 * \note Do we want to add a zero suppression threshold here?
-	 */
    eutils::linear_calibrate(ecal, validLinks, variables.adc);
 }
 
@@ -79,6 +71,53 @@ exotic::Dsssd::Variables::Variables() {
 }
 
 void exotic::Dsssd::Variables::reset() {
+   // set default values
+   std::fill(adc.module, adc.module + MAX_CHANNELS, 0);
+   eutils::index_fill(adc.channel, adc.channel + MAX_CHANNELS);
+   std::fill(adc.pedestal, adc.pedestal + MAX_CHANNELS, 0);
+   std::fill(adc.slope, adc.slope + MAX_CHANNELS, 1.);
+   std::fill(adc.offset, adc.offset + MAX_CHANNELS, 0.);
+}
+
+// ================ class exotic::Mcp ========================= //
+
+exotic::Mcp::Mcp(std::string alias) : Detector(alias), variables() {
+   validLinks = 0;
+   reset();
+}
+
+void exotic::Mcp::reset() {
+   eutils::reset_array(MAX_CHANNELS, ecal);
+   eutils::reset_data(x, y);
+}
+
+void exotic::Mcp::read_data(const midas::Event &event) {
+   channel_map(raw, validLinks, variables.adc.channel, variables.adc.module, event);
+   channel_map(ecal, validLinks, variables.adc.channel, variables.adc.module, event);
+}
+
+void exotic::Mcp::calculate() {
+   eutils::linear_calibrate(ecal, validLinks, variables.adc);
+   // Position calculation if we have all valid anode signals
+	if(eutils::is_valid_all(raw, MAX_CHANNELS)) {
+		//const double Lhalf = 25.;  // half the length of a single side of the MCP (50/2 [mm])
+		double sum = eutils::calculate_sum(ecal, ecal + MAX_CHANNELS);
+		if(sum != 0) {
+			//x = Lhalf * ( (anode[1] + anode[2]) - (anode[0] + anode[3]) ) / sum;
+			//y = Lhalf * ( (anode[0] + anode[1]) - (anode[2] + anode[3]) ) / sum;
+		}
+	}
+   
+
+}
+
+// ================ class dragon::Mcp::Variables ================ //
+
+exotic::Mcp::Variables::Variables() {
+   reset();
+}
+
+void exotic::Mcp::Variables::reset() {
    // set default values
    std::fill(adc.module, adc.module + MAX_CHANNELS, 0);
    eutils::index_fill(adc.channel, adc.channel + MAX_CHANNELS);

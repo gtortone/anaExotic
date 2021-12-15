@@ -149,6 +149,8 @@ IT FindSerial(IT begin_, IT end_, uint32_t value) {
 void rootana::App::Process(const midas::Event &event) {
    for(int i=0; i<detList.DsssdSize(); i++)
       unpack_event(detList.getDsssd(i), event);
+   for(int i=0; i<detList.McpSize(); i++)
+      unpack_event(detList.getMcp(i), event);
    fill_hists(0);
 }
 
@@ -329,10 +331,11 @@ void rootana::App::process_json(void) {
 
       name = j[i]["name"];
 
-      ///
-      /// DSSD detector
-      ///
       if (exotic::utils::toLower(type) == "dsssd") {
+
+         ///
+         /// DSSD detector
+         ///
 
          detList.create(exotic::utils::toLower(type), name);
          exotic::utils::Info("rootana") << "Detector type " << type << " with name " << name << " allocated";
@@ -376,14 +379,59 @@ void rootana::App::process_json(void) {
 
             det->validLinks++;
          }
+
+      } else if (exotic::utils::toLower(type) == "mcp") {
+         
+         ///
+         /// MCP detector
+         ///
+
+         detList.create(exotic::utils::toLower(type), name);
+         exotic::utils::Info("rootana") << "Detector type " << type << " with name " << name << " allocated";
+         exotic::Mcp *det = detList.getMcp(name);
+
+         for (uint k = 0; k < j[i]["link"].size(); k++) {
+            uint id = k;
+
+            if (j[i]["link"][k]["board"].is_null()) {
+               exotic::utils::Error("rootana") << "Detector name " << name << " missing board number";
+               Terminate(1);
+            }
+            //det->variables.adc.board[id] = j[i]["link"][k]["board"];
+
+            if (j[i]["link"][k]["module"].is_null()) {
+               exotic::utils::Error("rootana") << "Detector name " << name << " missing module number";
+               Terminate(1);
+            }
+            det->variables.adc.module[id] = j[i]["link"][k]["module"];
+
+            if (j[i]["link"][k]["module"].is_null()) {
+               exotic::utils::Error("rootana") << "Detector name " << name << " missing channel number";
+               Terminate(1);
+            }
+            det->variables.adc.channel[id] = j[i]["link"][k]["channel"];
+
+            if (j[i]["link"][k]["slope"].is_null())
+               det->variables.adc.slope[id] = 1;
+            else
+               det->variables.adc.slope[id] = j[i]["link"][k]["slope"];
+
+            if (j[i]["link"][k]["offset"].is_null())
+               det->variables.adc.offset[id] = 0;
+            else
+               det->variables.adc.offset[id] = j[i]["link"][k]["offset"];
+
+            if (j[i]["link"][k]["pedestal"].is_null())
+               det->variables.adc.pedestal[id] = 0;
+            else
+               det->variables.adc.pedestal[id] = j[i]["link"][k]["pedestal"];
+
+            det->validLinks++;
+         }
       } else {
          exotic::utils::Error("rootana") << "Detector type " << type << " not correct";
          Terminate(1);
       }
-
-      ///
-      /// add detectors here
-      ///
    }
 }
 

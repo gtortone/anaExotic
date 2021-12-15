@@ -1,6 +1,11 @@
 DIR:
    histos/event
 
+SUMMARY:
+ 	("test", "test", 16384, 0, 16383)
+ 	DSSSD("front")->ecal
+	32
+
 TH1D:
    ("h1", "Title 1", 16384, 0, 16383)
    myfunc1()
@@ -22,10 +27,10 @@ TH2D:
    DSSSD("front")->ecal[0]
    DSSSD("front")->ecal[1]
 CUT:
-   Greater(DSSSD("front")->ecal[0], 1500)
+   Greater(DSSSD("back")->ecal[0], 1500)
 
 TH2D:
    ("h6", "Title 6", 512, 0, 511, 512, 0, 511)
    myfunc1()
-   myfunc1()
+   myfunc2()
 

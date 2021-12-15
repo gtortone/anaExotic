@@ -69,6 +69,52 @@ class Dsssd : public Detector {
    Dsssd::Variables variables;
 };
 
+//
+// Micro Channel Plate
+//
+
+class Mcp : public Detector {
+
+ public: // Constants
+   // up, down, right, left, cathode
+   static const int MAX_CHANNELS = 10;
+
+ public: // Methods
+   Mcp(std::string alias);
+   void reset();
+   void read_data(const midas::Event &event);
+   void calculate();
+
+ public:
+   // signal order: UP_E, UP_T, DOWN_E, DOWN_T, RIGHT_E, RIGHT_T, LEFT_E, LEFT_T, CATHODE_E, CATHODE_T
+   // Raw values
+   uint raw[MAX_CHANNELS];
+   // Calibrated energy signals
+   double ecal[MAX_CHANNELS];
+   // Number of connected detector links
+   uint validLinks;
+   // Position
+   double x,y;
+
+ public: // Subclasses
+   //
+   // Dsssd Variables Class
+   //
+   class Variables {
+    public: // Methods
+      Variables();
+      void reset();
+
+    public: // Data
+      /// Adc variables for the energy signals
+      exotic::utils::AdcVariables<MAX_CHANNELS> adc;
+   };
+
+ public: // Subclass instances
+   /// Instance of Dsssd::Variables
+   Dsssd::Variables variables;
+};
+
 } // namespace exotic
 
 #endif

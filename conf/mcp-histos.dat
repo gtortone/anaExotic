@@ -1,0 +1,135 @@
+DIR:
+histos/raw
+
+TH1D:
+ 	("upRaw", "upRaw", 16384, 0, 16383)
+ 	MCP("A")->raw[0]
+
+TH1D:
+ 	("downRaw", "downRaw", 16384, 0, 16383)
+ 	MCP("A")->raw[2]
+
+TH1D:
+ 	("rightRaw", "rightRaw", 16384, 0, 16383)
+ 	MCP("A")->raw[4]
+
+TH1D:
+ 	("leftRaw", "leftRaw", 16384, 0, 16383)
+ 	MCP("A")->raw[6]
+
+TH1D:
+ 	("cathodeRaw", "cathodeRaw", 16384, 0, 16383)
+ 	MCP("A")->raw[8]
+
+DIR:
+histos/energy
+
+TH1D:
+ 	("upE", "upE", 16384, 0, 16383)
+ 	MCP("A")->ecal[0]
+
+TH1D:
+ 	("downE", "downE", 16384, 0, 16383)
+ 	MCP("A")->ecal[2]
+
+TH1D:
+ 	("rightE", "rightE", 16384, 0, 16383)
+ 	MCP("A")->ecal[4]
+
+TH1D:
+ 	("leftE", "leftE", 16384, 0, 16383)
+ 	MCP("A")->ecal[6]
+
+TH1D:
+ 	("cathodeE", "cathodeE", 16384, 0, 16383)
+ 	MCP("A")->ecal[8]
+
+TH1D:
+ 	("QX", "QX", 16384, 0, 16383)
+ 	QX()
+
+TH1D:
+ 	("QY", "QY", 16384, 0, 16383)
+ 	QY()
+
+DIR:
+histos/time
+
+TH1D:
+ 	("upT", "upT", 16384, 0, 16383)
+ 	MCP("A")->ecal[1]
+
+TH1D:
+ 	("downT", "downT", 16384, 0, 16383)
+ 	MCP("A")->ecal[3]
+
+TH1D:
+ 	("rightT", "rightT", 16384, 0, 16383)
+ 	MCP("A")->ecal[5]
+
+TH1D:
+ 	("leftT", "leftT", 16384, 0, 16383)
+ 	MCP("A")->ecal[7]
+
+TH1D:
+ 	("cathodeT", "cathodeT", 16384, 0, 16383)
+ 	MCP("A")->ecal[9]
+
+DIR:
+histos/direction1D
+
+TH1D:
+	("up", "1000 * (up/up + down)", 16384, 0, 16383)
+	UP()
+
+TH1D:
+	("down", "1000 * (down/up + down)", 16384, 0, 16383)
+	DOWN()
+
+TH1D:
+	("right", "1000 * (right/right + left)", 16384, 0, 16383)
+	RIGHT()
+
+TH1D:
+	("left", "1000 * (left/right + left)", 16384, 0, 16383)
+	LEFT()
+
+DIR:
+histos/direction2D
+
+TH2D:
+	("updown", "up/down", 1000, 0, 1200, 1000, 0, 1200)
+	UP()
+	DOWN()
+
+TH2D:
+	("rightleft", "right/left", 1000, 0, 1200, 1000, 0, 1200)
+	RIGHT()
+	LEFT()
+
+TH2D:
+	("upright", "up/right", 1000, 0, 1200, 1000, 0, 1200)
+	UP()
+	RIGHT()
+
+TH2D:
+	("downleft", "down/left", 1000, 0, 1200, 1000, 0, 1200)
+	DOWN()
+	LEFT()
+
+TH2D:
+	("mosaic", "mosaic", 1000, -1, 1, 1000, -1, 1)
+	X()
+	Y()
+
+TH2D:
+	("qtot", "qtot", 1000, 0, 1200, 1000, 0, 1200)
+	QX()
+	QY()
+
+TH2D:
+	("upvsdown", "upvsdown", 1000, 0, 8000, 1000, 0, 8000)
+	QUP()
+	QDOWN()
+
+

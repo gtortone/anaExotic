@@ -4,6 +4,6 @@
 #include "rootana/Globals.h"
 
 #define DSSSD(name)     detList.getDsssd(name)
-#define PPAC(name)      detList.getPpac(name)
+#define MCP(name)       detList.getMcp(name)
 
 #endif
